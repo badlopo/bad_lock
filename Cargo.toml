@@ -1,5 +1,5 @@
 [package]
-name = "image_lock"
+name = "bad_lock"
 authors = ["lopo<lopo@zju.edu.cn>"]
 version = "0.1.0"
 edition = "2021"

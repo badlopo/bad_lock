@@ -15,9 +15,9 @@ type Aes128CbcDec = cbc::Decryptor<aes::Aes128Dec>;
 
 /// AES128, CBC mode, PKCS7 padding
 /// - key & iv: md5(code)
-pub struct ImageLockCore;
+pub struct BadLockCore;
 
-impl ImageLockCore {
+impl BadLockCore {
     /// encrypt source with code
     ///
     /// - len(result) = len(source) + 16 - len(source) % 16
@@ -46,7 +46,7 @@ mod unit_test {
     fn encrypt() {
         let source = "hello world".as_bytes();
         let code = "1234567890123456".as_bytes();
-        let encrypted = super::ImageLockCore::encrypt(source, code);
+        let encrypted = super::BadLockCore::encrypt(source, code);
 
         println!("{:02x?}", encrypted);
         // [0e, e6, a2, 36, 0d, 77, d8, 46, 18, 15, a3, bf, 07, 12, 74, b2]
@@ -56,8 +56,8 @@ mod unit_test {
     fn decrypt() {
         let source = "hello world".as_bytes();
         let code = "1234567890123456".as_bytes();
-        let encrypted = super::ImageLockCore::encrypt(source, code);
-        let decrypted = super::ImageLockCore::decrypt(&encrypted, code);
+        let encrypted = super::BadLockCore::encrypt(source, code);
+        let decrypted = super::BadLockCore::decrypt(&encrypted, code);
 
         println!("{:02x?}", decrypted)
         // [68, 65, 6c, 6c, 6f, 20, 77, 6f, 72, 6c, 64]
