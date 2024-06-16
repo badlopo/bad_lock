@@ -30,13 +30,11 @@ impl BadLockCore {
     }
 
     /// decrypt source with code
-    pub fn decrypt(source: &[u8], password: &[u8]) -> Vec<u8> {
+    pub fn decrypt(source: &[u8], password: &[u8]) -> Option<Vec<u8>> {
         // use md5 hash to ensure the length is 16
         let code = get_md5!(password);
 
-        Aes128CbcDec::new(&code.into(), &code.into())
-            .decrypt_padded_vec_mut::<Pkcs7>(source)
-            .expect("Unpad failed")
+        Aes128CbcDec::new(&code.into(), &code.into()).decrypt_padded_vec_mut::<Pkcs7>(source).ok()
     }
 }
 
@@ -59,7 +57,7 @@ mod unit_test {
         let encrypted = super::BadLockCore::encrypt(source, code);
         let decrypted = super::BadLockCore::decrypt(&encrypted, code);
 
-        println!("{:02x?}", decrypted)
+        println!("{:02x?}", decrypted);
         // [68, 65, 6c, 6c, 6f, 20, 77, 6f, 72, 6c, 64]
     }
 }
