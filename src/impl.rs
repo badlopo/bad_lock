@@ -1,4 +1,3 @@
-use std::io::Write;
 use crate::core::BadLockCore;
 
 const AGENT: &[u8] = b"BadLock(v0.0.1)\n";
