@@ -13,45 +13,34 @@ const HEADER: &[u8] = b"BadLock(v0.0.1)\n";
 /// The header is fixed length of 32 bytes with the following format:
 ///
 /// ```
-/// BadLock(v0.0.1)
-/// <extension>
-/// (padding with spaces to 32 bytes)
+/// BadLock(v0.0.1)\n -- (16 bytes)
+/// <extension> -- (padding with spaces to 16 bytes)
 /// ```
-fn build_header(extension: impl AsRef<[u8]>) -> [u8; 32] {
-    todo!("Implement the build_header function.")
+fn build_header(extension: impl AsRef<[u8]>) -> Vec<u8> {
+    // of course, we can define a fixed length array (`[u8; 32]`),
+    // but a `Vec` is more flexible for later use.
+    let mut header = vec![32u8; 32];
+    let extension: &[u8] = extension.as_ref();
+
+    header[..HEADER.len()].copy_from_slice(HEADER);
+    header[HEADER.len()..HEADER.len() + extension.len()].copy_from_slice(extension);
+
+    header
 }
 
 pub struct BadLockImpl;
 
 impl BadLockImpl {
-    /// Locks the file with the given password. Returns the filename of the locked file, or a semantic error message.
-    fn lock(path: impl AsRef<Path>, password: impl AsRef<[u8]>) -> Result<String, String> {
-        match fs::read(&path) {
-            Ok(bytes) => {
-                let path: &Path = path.as_ref();
-                let filename = match path.file_stem() {
-                    None => format!("{}.badlock", timestamp!()),
-                    Some(stem) => format!("{}.badlock", stem.to_string_lossy())
-                };
-
-                match fs::File::create(&filename) {
-                    Ok(mut file) => {
-                        let header_bytes = build_header(path.extension().unwrap_or("".as_ref()));
-                        let encrypted = BadLockCore::encrypt(&bytes, password);
-
-                        file.write(&header_bytes).expect("Error: Failed to write the header.");
-                        file.write_all(&encrypted).expect("Error: Failed to write the encrypted data.");
-
-                        Ok(filename)
-                    }
-                    Err(err) => Err(format!("{}", err))
-                }
-            }
-            Err(err) => Err(format!("{}", err))
-        }
+    /// - `bytes` raw data to be locked
+    /// - `password` password to lock the data
+    /// - `extension` extension of original file
+    fn lock(bytes: &[u8], password: impl AsRef<[u8]>, extension: impl AsRef<[u8]>) -> Vec<u8> {
+        let mut header = build_header(extension);
+        header.extend(BadLockCore::encrypt(bytes, password));
+        header
     }
 
-    fn unlock(path: impl AsRef<Path>, password: impl AsRef<[u8]>) -> Result<(), String> {
+    fn unlock(bytes: &[u8], password: impl AsRef<[u8]>) -> Result<(), String> {
         todo!()
         // match fs::read(path) {
         //     Ok(bytes) => {
@@ -70,7 +59,15 @@ impl BadLockImpl {
 mod unit_test {
     #[test]
     fn lock() {
-        super::BadLockImpl::lock("./test.txt", "password").unwrap();
-        // println!("{:?}", timestamp!());
+        let encrypted = super::BadLockImpl::lock(b"hello world\nthis is line2", "password", "txt");
+        println!("{:?}", encrypted);
+    }
+
+    #[test]
+    fn t() {
+        let mut v = vec![3, 4, 5];
+        v.splice(0..0, vec![1, 2, 3]);
+        v.extend_from_slice(&[6, 7, 8]);
+        println!("{:?}", v)
     }
 }
