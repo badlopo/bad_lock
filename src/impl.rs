@@ -11,7 +11,10 @@ const AGENT: &[u8] = b"BadLock(v0.0.1)\n";
 /// BadLock(v0.0.1)\n -- (16 bytes)
 /// <extension> -- (padding with spaces to 16 bytes)
 /// ```
-fn build_header(extension: impl AsRef<[u8]>) -> Vec<u8> {
+fn build_header<EXT>(extension: EXT) -> Vec<u8>
+where
+    EXT: AsRef<[u8]>,
+{
     // of course, we can define a fixed length array (`[u8; 32]`),
     // but a `Vec` is more flexible for later use.
     let mut header = vec![32u8; 32];
@@ -57,7 +60,11 @@ impl BadLockImpl {
     /// - `bytes` raw data to be locked
     /// - `password` password to lock the data
     /// - `extension` extension of original file
-    pub fn lock(bytes: &[u8], password: impl AsRef<[u8]>, extension: impl AsRef<[u8]>) -> Vec<u8> {
+    pub fn lock<P, EXT>(bytes: &[u8], password: P, extension: EXT) -> Vec<u8>
+    where
+        P: AsRef<[u8]>,
+        EXT: AsRef<[u8]>,
+    {
         let mut header = build_header(extension);
         header.extend(BadLockCore::encrypt(bytes, password));
         header
@@ -65,7 +72,10 @@ impl BadLockImpl {
 
     /// - `bytes` raw data to be unlocked
     /// - `password` password to unlock the data
-    pub fn unlock(bytes: &[u8], password: impl AsRef<[u8]>) -> Result<UnlockResult, String> {
+    pub fn unlock<P>(bytes: &[u8], password: P) -> Result<UnlockResult, String>
+    where
+        P: AsRef<[u8]>,
+    {
         if bytes.len() < 32 {
             return Err("Invalid BadLock file".to_string());
         }

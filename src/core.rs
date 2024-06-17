@@ -21,7 +21,10 @@ impl BadLockCore {
     /// encrypt source with code
     ///
     /// - len(result) = len(source) + 16 - len(source) % 16
-    pub fn encrypt(source: &[u8], password: impl AsRef<[u8]>) -> Vec<u8> {
+    pub fn encrypt<P>(source: &[u8], password: P) -> Vec<u8>
+    where
+        P: AsRef<[u8]>,
+    {
         // use md5 hash to ensure the length is 16
         let code = get_md5!(password);
 
@@ -30,7 +33,10 @@ impl BadLockCore {
     }
 
     /// decrypt source with code
-    pub fn decrypt(source: &[u8], password: impl AsRef<[u8]>) -> Option<Vec<u8>> {
+    pub fn decrypt<P>(source: &[u8], password: P) -> Option<Vec<u8>>
+    where
+        P: AsRef<[u8]>,
+    {
         // use md5 hash to ensure the length is 16
         let code = get_md5!(password);
 
