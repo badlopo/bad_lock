@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script type="module">
+    import init, {BadLockWasm} from "../wasm/badlock.js"
+
+    window.BadLockWasm = BadLockWasm
+    await init()
+
+    const encrypted = BadLockWasm.lock([104, 101, 108, 108, 111], 'lopo')
+    console.log('encrypted', encrypted)
+
+    const decrypted = BadLockWasm.unlock(encrypted, 'lopo')
+    console.log('decrypted', decrypted)
+</script>
+</body>
+</html>
