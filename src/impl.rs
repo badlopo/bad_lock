@@ -57,7 +57,7 @@ impl BadLockImpl {
     /// - `bytes` raw data to be locked
     /// - `password` password to lock the data
     /// - `extension` extension of original file
-    fn lock(bytes: &[u8], password: impl AsRef<[u8]>, extension: impl AsRef<[u8]>) -> Vec<u8> {
+    pub fn lock(bytes: &[u8], password: impl AsRef<[u8]>, extension: impl AsRef<[u8]>) -> Vec<u8> {
         let mut header = build_header(extension);
         header.extend(BadLockCore::encrypt(bytes, password));
         header
@@ -65,7 +65,7 @@ impl BadLockImpl {
 
     /// - `bytes` raw data to be unlocked
     /// - `password` password to unlock the data
-    fn unlock(bytes: &[u8], password: impl AsRef<[u8]>) -> Result<UnlockResult, String> {
+    pub fn unlock(bytes: &[u8], password: impl AsRef<[u8]>) -> Result<UnlockResult, String> {
         if bytes.len() < 32 {
             return Err("Invalid BadLock file".to_string());
         }
