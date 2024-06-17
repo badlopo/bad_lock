@@ -8,10 +8,24 @@ use crate::timestamp;
 
 const HEADER: &[u8] = b"BadLock(v0.0.1)\n";
 
+/// Builds the header for the BadLock file.
+///
+/// The header is fixed length of 32 bytes with the following format:
+///
+/// ```
+/// BadLock(v0.0.1)
+/// <extension>
+/// (padding with spaces to 32 bytes)
+/// ```
+fn build_header(extension: impl AsRef<[u8]>) -> [u8; 32] {
+    todo!("Implement the build_header function.")
+}
+
 pub struct BadLockImpl;
 
 impl BadLockImpl {
-    fn lock(path: impl AsRef<Path>, password: impl AsRef<[u8]>) -> Result<(), String> {
+    /// Locks the file with the given password. Returns the filename of the locked file, or a semantic error message.
+    fn lock(path: impl AsRef<Path>, password: impl AsRef<[u8]>) -> Result<String, String> {
         match fs::read(&path) {
             Ok(bytes) => {
                 let path: &Path = path.as_ref();
@@ -20,12 +34,15 @@ impl BadLockImpl {
                     Some(stem) => format!("{}.badlock", stem.to_string_lossy())
                 };
 
-                match fs::File::create(filename) {
+                match fs::File::create(&filename) {
                     Ok(mut file) => {
+                        let header_bytes = build_header(path.extension().unwrap_or("".as_ref()));
                         let encrypted = BadLockCore::encrypt(&bytes, password);
-                        file.write(HEADER).expect("Error: Failed to write the header.");
+
+                        file.write(&header_bytes).expect("Error: Failed to write the header.");
                         file.write_all(&encrypted).expect("Error: Failed to write the encrypted data.");
-                        Ok(())
+
+                        Ok(filename)
                     }
                     Err(err) => Err(format!("{}", err))
                 }
