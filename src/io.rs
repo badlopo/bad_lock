@@ -81,13 +81,13 @@ mod unit_test {
 
     #[test]
     fn lock() {
-        let r = super::BadLockIO::lock("test.txt", "password", Some("test.badlock"));
+        let r = super::BadLockIO::lock("__test__/test.txt", "password", None::<&Path>);
         println!("{:?}", r)
     }
 
     #[test]
     fn unlock() {
-        let r = super::BadLockIO::unlock("test.badlock", "password", None::<&Path>);
+        let r = super::BadLockIO::unlock("__test__/test.badlock", "password", Some("__test__/test_recover.txt"));
         println!("{:?}", r)
     }
 }
