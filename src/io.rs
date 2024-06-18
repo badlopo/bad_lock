@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use crate::r#impl::BadLockImpl;
 
 pub struct BadLockIO;
@@ -9,7 +9,7 @@ impl BadLockIO {
     /// - `password` password to lock the file
     /// - `output` path to the output file, if not provided,
     /// the output file will be named as `input` with extension `.badlock`
-    pub fn lock<I, P, O>(input: I, password: P, output: Option<O>) -> Result<(), String>
+    pub fn lock<I, P, O>(input: I, password: P, output: Option<O>) -> Result<PathBuf, String>
     where
         I: AsRef<Path>,
         P: AsRef<[u8]>,
@@ -31,8 +31,8 @@ impl BadLockIO {
                     }
                 };
 
-                match fs::write(output, bytes) {
-                    Ok(_) => Ok(()),
+                match fs::write(&output, bytes) {
+                    Ok(_) => Ok(output.canonicalize().unwrap()),
                     Err(err) => Err(format!("Write error: {}", err)),
                 }
             }
@@ -44,7 +44,7 @@ impl BadLockIO {
     /// - `password` password to unlock the file
     /// - `output` path to the output file, if not provided,
     /// the output file will be named as `input` with extension in the locked file (if any)
-    pub fn unlock<I, P, O>(input: I, password: P, output: Option<O>) -> Result<(), String>
+    pub fn unlock<I, P, O>(input: I, password: P, output: Option<O>) -> Result<PathBuf, String>
     where
         I: AsRef<Path>,
         P: AsRef<[u8]>,
@@ -65,8 +65,8 @@ impl BadLockIO {
                     }
                 };
 
-                match fs::write(output, result.content) {
-                    Ok(_) => Ok(()),
+                match fs::write(&output, result.content) {
+                    Ok(_) => Ok(output.canonicalize().unwrap()),
                     Err(err) => Err(format!("Write error: {}", err)),
                 }
             }
