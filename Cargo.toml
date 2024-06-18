@@ -3,6 +3,7 @@ name = "bad_lock"
 authors = ["lopo<lopo@zju.edu.cn>"]
 version = "0.1.0"
 edition = "2021"
+description = "lock/unlock files with password by aes-128-cbc"
 
 [lib]
 crate-type = ["cdylib"]
@@ -11,6 +12,6 @@ crate-type = ["cdylib"]
 aes = "0.8.4"
 base64 = "0.22.1"
 cbc = { version = "0.1.2", features = ["alloc", "block-padding"] }
-clap = "4.5.7"
+clap = { version = "4.5.7", features = ["derive"] }
 md5 = "0.7.0"
 wasm-bindgen = "0.2.92"
