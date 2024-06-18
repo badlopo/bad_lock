@@ -10,7 +10,7 @@ use crate::r#impl::{BadLockImpl, UnlockResult};
 
 // OPTIMIZE: make members public rather than using getters to reduce the cost of cloning
 #[wasm_bindgen]
-struct UnlockResultABI(UnlockResult);
+pub struct UnlockResultABI(UnlockResult);
 
 #[wasm_bindgen]
 impl UnlockResultABI {

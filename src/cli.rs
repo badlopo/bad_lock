@@ -9,7 +9,7 @@ pub struct BadLockCli {
 }
 
 #[derive(Subcommand, Debug)]
-enum Commands {
+pub enum Commands {
     #[command(about = "encrypt file with password")]
     Lock {
         #[arg(short = 'f', long, help = "file to be encrypted")]
