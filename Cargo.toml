@@ -2,8 +2,16 @@
 name = "bad_lock"
 authors = ["lopo<lopo@zju.edu.cn>"]
 version = "0.1.0"
+license = "MIT"
+homepage = "https://badlopo.github.io/bad_lock/"
+repository = "https://github.com/badlopo/bad_lock/"
 edition = "2021"
 description = "lock/unlock files with password by aes-128-cbc"
+exclude = [
+    '/__test__/*',
+    '/docs/*',
+    '/target/*'
+]
 
 [lib]
 crate-type = ["cdylib"]
