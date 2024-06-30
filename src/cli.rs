@@ -44,7 +44,7 @@ impl BadLockCli {
                 }
                 Commands::Unlock { file, password, output } => {
                     match BadLockIO::unlock(&file, &password, output) {
-                        Ok(o) => println!("The file at [{}] was successfully decrypted using the password [{}]\n(output is located at {:?})", file, password, o),
+                        Ok(o) => println!("The file at [{}] was successfully decrypted, output is located at {:?}", file, o),
                         Err(err) => println!("{}", err),
                     }
                 }
