@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use crate::r#impl::BadLockImpl;
+use crate::runner::BadLockRunner;
+use crate::timestamp;
 
 pub struct BadLockIO;
 
@@ -9,18 +11,22 @@ impl BadLockIO {
     /// - `password` password to lock the file
     /// - `output` path to the output file, if not provided,
     /// the output file will be named as `input` with extension `.badlock`
-    pub fn lock<I, P, O>(input: I, password: P, output: Option<O>) -> Result<PathBuf, String>
-    where
-        I: AsRef<Path>,
-        P: AsRef<[u8]>,
-        O: AsRef<Path>,
-    {
+    pub fn lock(
+        input: impl AsRef<Path>,
+        secret: Option<impl AsRef<[u8]>>,
+        passwords: Vec<impl AsRef<[u8]>>,
+        output: Option<impl AsRef<Path>>,
+    ) -> Result<PathBuf, String> {
         let input: &Path = input.as_ref();
 
         match fs::read(input) {
             Ok(bytes) => {
-                let ext: &[u8] = input.extension().map_or(b"", |ext| ext.as_encoded_bytes());
-                let bytes = BadLockImpl::lock(&bytes, password, ext);
+                let filename: &[u8] = input.file_name().unwrap().to_str().unwrap().as_bytes();
+                let bytes = if let Some(s) = secret {
+                    BadLockRunner::lock(filename, s, passwords, &bytes)
+                } else {
+                    BadLockRunner::lock(filename, format!("{}", timestamp!()), passwords, &bytes)
+                };
 
                 let output = match output {
                     Some(o) => o.as_ref().to_path_buf(),
