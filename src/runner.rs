@@ -24,12 +24,19 @@ impl BadLockRunner {
     pub fn lock(
         filename: impl AsRef<[u8]>,
         secret: impl AsRef<[u8]>,
-        passwords: Vec<impl AsRef<[u8]>>,
+        mut passwords: Vec<impl AsRef<[u8]>>,
         content: &[u8],
     ) -> Vec<u8> {
+        let count = passwords.len();
+
         // no password, no lock!
-        if passwords.len() == 0 {
+        if count == 0 {
             return vec![];
+        }
+
+        // truncate the passwords if there are more than 16
+        if count > 16 {
+            passwords.truncate(16);
         }
 
         let secret = secret.as_ref();
