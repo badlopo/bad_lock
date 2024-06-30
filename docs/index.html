@@ -5,69 +5,35 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>BadLock</title>
+    <title>Document</title>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            position: relative;
+        input {
             width: 100%;
-            height: 100%;
-            user-select: none;
+            height: 30px;
+            outline: none;
         }
 
-        img {
-            -webkit-user-drag: none;
-        }
-
-        body {
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #source-area {
+        textarea {
             width: 100%;
-            height: 300px;
-            padding: 16px;
-            border: dashed 1px #ccc;
-            border-radius: 16px;
-            font-size: 32px;
-            color: #dfdfdf;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #pick-result {
-            width: 100%;
-            padding: 16px;
-            border: dashed 1px #ccc;
-            border-radius: 16px;
-            font-family: sans-serif;
-            display: none;
-
-            ul {
-                list-style: none;
-                line-height: 24px;
-
-                b {
-                    margin-right: 8px;
-                    text-transform: capitalize;
-                }
-            }
+            height: 200px;
+            outline: none;
+            resize: none;
         }
     </style>
 </head>
 <body>
-<div id="source-area"><span>点击此处或拖入文件</span></div>
-<div id="pick-result"></div>
+<h1>加密</h1>
+<input id="source1" type="file" placeholder="源文件"> <br> <br>
+<input id="secret" type="text" placeholder="密钥"> <br> <br>
+<textarea id="passwords" placeholder="密码(一行一个)"></textarea> <br> <br>
+<button id="encrypt">加密</button>
+
+<hr>
+<h1>解密</h1>
+<input id="source2" type="file" placeholder="源文件"> <br> <br>
+<input id="password" type="text" placeholder="密码"> <br> <br>
+<button id="decrypt">解密</button>
 
 <script type="module">
     import init, {BadLockWasm} from "./badlock.js"
@@ -76,113 +42,81 @@
     window.initialized = true
     window.BadLockWasm = BadLockWasm
 </script>
+
 <script>
-    /**
-     * @type {HTMLDivElement}
-     */
-    const source = window['source-area']
-    /**
-     * @type {HTMLDivElement}
-     */
-    const picked = window['pick-result']
+    const source1 = document.getElementById('source1')
+    const secret = document.getElementById('secret')
+    const passwords = document.getElementById('passwords')
+    const encrypt = document.getElementById('encrypt')
 
-    /**
-     * @type {File|null}
-     */
-    let source_file = null
+    encrypt.onclick = async () => {
+        /**
+         * @type {File}
+         */
+        const file = source1.files[0]
+        if (!file) {
+            alert('请选择源文件')
+            return
+        }
 
-    /**
-     * @param bytes {Uint8Array}
-     * @param filename {string}
-     */
-    function downloadFile(bytes, filename) {
-        const v = confirm(`about to download file [${filename}], continue?`)
-        if (!v) return
+        const secretValue = secret.value
+        if (!secretValue) {
+            alert('请输入密钥')
+            return
+        }
 
-        const url = URL.createObjectURL(new Blob([bytes]))
-        const anchor = document.createElement('a')
-        anchor.download = filename
-        anchor.href = url
-        anchor.click()
+        const passwordValues = passwords.value.split('\n').filter(v => !!v)
+        if (passwordValues.length === 0) {
+            alert('请输入密码')
+            return
+        }
+
+        const bytes = BadLockWasm.lock(file.name ?? 'UNKNOWN_SOURCE_FILE', secretValue, passwordValues, new Uint8Array(await file.arrayBuffer()))
+        const blob = new Blob([bytes], {type: 'application/octet-stream'})
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = Date.now() + '.badlock'
+        a.click()
         URL.revokeObjectURL(url)
     }
 
-    function cancelPick() {
-        source_file = null
-        source.style.display = 'flex'
-        picked.style.display = 'none'
-    }
+    const source2 = document.getElementById('source2')
+    const password = document.getElementById('password')
+    const decrypt = document.getElementById('decrypt')
+    decrypt.onclick = async () => {
+        /**
+         * @type {File}
+         */
+        const file = source2.files[0]
+        if (!file) {
+            alert('请选择源文件')
+            return
+        }
 
-    async function encryptPick() {
-        if (!window.initialized) {
-            alert('WASM模块尚未初始化')
+        const passwordValue = password.value
+        if (!passwordValue) {
+            alert('请输入密码')
             return
         }
 
         try {
-            const path_parts = source_file.name.split('.')
-            const bytes = new Uint8Array(await source_file.arrayBuffer())
-            const password = window['password-input'].value
-            const encrypted = window.BadLockWasm.lock(bytes, password, path_parts.pop())
-
-            path_parts.push('badlock')
-            downloadFile(encrypted, path_parts.join('.'))
-        } catch (err) {
-            console.log('fail to encrypt:', err)
-            alert('出错!')
-        }
-    }
-
-    async function decryptPick() {
-        if (!window.initialized) {
-            alert('WASM模块尚未初始化')
-            return
-        }
-
-        try {
-            const path_parts = source_file.name.split('.')
-            const bytes = new Uint8Array(await source_file.arrayBuffer())
-            const password = window['password-input'].value
-            try {
-                const decrypted = window.BadLockWasm.unlock(bytes, password)
-                path_parts.pop()
-                const ext = decrypted.extension
-                if (!!ext) path_parts.push(ext)
-                downloadFile(decrypted.content, path_parts.join('.'))
-            } catch (err) {
-                alert(err)
+            const result = BadLockWasm.unlock(passwordValue, new Uint8Array(await file.arrayBuffer()))
+            const d = confirm(`解密成功，文件名: ${result.filename}, 支持的密码数量: ${result.password_count}. 是否下载?`)
+            if (d) {
+                const blob = new Blob([result.content])
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = result.filename
+                a.click()
+                URL.revokeObjectURL(url)
             }
         } catch (err) {
-            console.log('fail to encrypt:', err)
-            alert('出错!')
-        }
-    }
-
-    source.onclick = async () => {
-        try {
-            /**
-             * @type {File}
-             */
-            const file = await (await window.showOpenFilePicker())[0].getFile()
-            if (!!file) {
-                source_file = file
-                source.style.display = 'none'
-                picked.style.display = 'block'
-                picked.innerHTML = `<ul>
-<li><b>filename:</b>${file.name}</li>
-<li><b>filetype:</b>${file.type}</li>
-<li><b>filesize:</b>${file.size}</li>
-</ul>
-<input id="password-input" type="text" placeholder="请输入密码">
-<button id="cancel-pick" onclick="cancelPick()">重新选择</button>
-<button id="confirm-pick" onclick="encryptPick()">加密</button>
-<button id="confirm-pick" onclick="decryptPick()">解密</button>`
-            }
-        } catch (err) {
-            console.log('fail to pick file:', err)
-            alert('出错!')
+            alert(err)
         }
     }
 </script>
+
 </body>
 </html>
