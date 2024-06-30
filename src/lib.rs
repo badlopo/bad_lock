@@ -1,32 +1,30 @@
 extern crate wasm_bindgen;
 
 mod core;
-mod r#impl;
 mod macros;
+mod runner;
 
 use wasm_bindgen::prelude::wasm_bindgen;
-use crate::r#impl::{BadLockImpl, UnlockResult};
+use crate::runner::{BadLockRunner};
 
-
-// OPTIMIZE: make members public rather than using getters to reduce the cost of cloning
-#[wasm_bindgen]
-pub struct UnlockResultABI(UnlockResult);
 
 #[wasm_bindgen]
-impl UnlockResultABI {
-    #[wasm_bindgen(getter)]
-    pub fn locker(&self) -> String {
-        self.0.locker.clone()
-    }
+pub struct UnlockResult {
+    filename: String,
+    pub password_count: u8,
+    content: Vec<u8>,
+}
 
+#[wasm_bindgen]
+impl UnlockResult {
     #[wasm_bindgen(getter)]
-    pub fn extension(&self) -> String {
-        self.0.extension.clone()
+    pub fn filename(&self) -> String {
+        self.filename.clone()
     }
 
     #[wasm_bindgen(getter)]
     pub fn content(&self) -> Vec<u8> {
-        self.0.content.clone()
+        self.content.clone()
     }
 }
 
@@ -35,11 +33,18 @@ pub struct BadLockWasm;
 
 #[wasm_bindgen]
 impl BadLockWasm {
-    pub fn lock(bytes: Vec<u8>, password: &str, extension: Option<String>) -> Vec<u8> {
-        BadLockImpl::lock(&bytes, password, extension.unwrap_or("".to_string()))
+    pub fn lock(filename: &str, secret: &str, passwords: Vec<String>, content: Vec<u8>) -> Vec<u8> {
+        BadLockRunner::lock(filename, secret, passwords, &content)
     }
 
-    pub fn unlock(bytes: Vec<u8>, password: &str) -> Result<UnlockResultABI, String> {
-        BadLockImpl::unlock(&bytes, password).map(|v| UnlockResultABI(v))
+    pub fn unlock(password: &str, content: Vec<u8>) -> Result<UnlockResult, String> {
+        match BadLockRunner::unlock(&content, password) {
+            Ok((meta, bytes)) => Ok(UnlockResult {
+                filename: meta.filename,
+                password_count: meta.password_count,
+                content: bytes,
+            }),
+            Err(err) => Err(format!("{}", err))
+        }
     }
 }
